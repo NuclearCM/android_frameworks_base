@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Team Nuclear -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Global Actions -->
+    <string name="global_action_search">Search</string>
+    <string name="global_action_voicesearch">Voice Search</string>
+</resources>

@@ -91,6 +91,8 @@ import java.util.UUID;
 
 import static com.android.internal.util.cm.PowerMenuConstants.*;
 
+import static com.android.internal.util.cm.PowerMenuConstants.*;
+
 /**
  * Helper to show the global actions dialog.  Each item is an {@link Action} that
  * may show depending on whether the keyguard is showing, and whether the device
@@ -525,7 +527,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
     private Action getAssistAction() {
         return new SinglePressAction(com.android.internal.R.drawable.ic_action_assist_focused,
-                R.string.global_action_assist) {
+                R.string.global_action_search) {
             @Override
             public void onPress() {
                 Intent intent = new Intent(Intent.ACTION_ASSIST);
@@ -547,7 +549,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
     private Action getVoiceAssistAction() {
         return new SinglePressAction(com.android.internal.R.drawable.ic_voice_search,
-                R.string.global_action_voice_assist) {
+                R.string.global_action_voicesearch) {
             @Override
             public void onPress() {
                 Intent intent = new Intent(Intent.ACTION_VOICE_ASSIST);
@@ -737,6 +739,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
             mContext.registerReceiver(mRingerModeReceiver, filter);
         }
     }
+
 
     private void refreshSilentMode() {
         if (!mHasVibrator) {

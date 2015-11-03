@@ -89,8 +89,8 @@ public final class ShutdownThread extends Thread {
     private static final int PACKAGE_MANAGER_STOP_PERCENT = 6;
     private static final int RADIO_STOP_PERCENT = 18;
     private static final int MOUNT_SERVICE_STOP_PERCENT = 20;
-
     private static final String SOFT_REBOOT = "soft_reboot";
+
 
     // length of vibration before shutting down
     private static final int SHUTDOWN_VIBRATE_MS = 500;
@@ -199,6 +199,7 @@ public final class ShutdownThread extends Thread {
                 break;
             }
         }
+
         final int longPressBehavior = context.getResources().getInteger(
                         com.android.internal.R.integer.config_longPressOnPowerBehavior);
         int resourceId = mRebootSafeMode
@@ -210,6 +211,9 @@ public final class ShutdownThread extends Thread {
             resourceId = com.android.internal.R.string.reboot_confirm;
         }
 
+        if (showRebootOption && !mRebootSafeMode) {
+            resourceId = com.android.internal.R.string.reboot_confirm;
+        }   
         Log.d(TAG, "Notifying thread to start shutdown longPressBehavior=" + longPressBehavior);
 
         if (confirm) {
@@ -264,7 +268,6 @@ public final class ShutdownThread extends Thread {
 
             confirmDialogBuilder.setNegativeButton(com.android.internal.R.string.no, null);
             sConfirmDialog = confirmDialogBuilder.create();
-
             closer.dialog = sConfirmDialog;
             sConfirmDialog.setOnDismissListener(closer);
             sConfirmDialog.getWindow().setType(WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG);
@@ -403,11 +406,15 @@ public final class ShutdownThread extends Thread {
                 pd.setIndeterminate(false);
             } else {
                 // Factory reset path. Set the dialog message accordingly.
-                pd.setTitle(context.getText(com.android.internal.R.string.reboot_to_reset_title));
+                pd.setTitle(context.getText(com.android.internal.R.string.reboot_title));
                 pd.setMessage(context.getText(
-                        com.android.internal.R.string.reboot_to_reset_message));
+                        com.android.internal.R.string.reboot_progress));
                 pd.setIndeterminate(true);
             }
+             } else if (mReboot) {
+            pd.setTitle(context.getText(com.android.internal.R.string.reboot_title));
+            pd.setMessage(context.getText(com.android.internal.R.string.reboot_progress));
+            pd.setIndeterminate(true);
         } else {
             if (mReboot) {
                 pd.setTitle(context.getText(com.android.internal.R.string.reboot_title));
@@ -566,19 +573,6 @@ public final class ShutdownThread extends Thread {
         }
 
         String shutDownFile = null;
-
-        //showShutdownAnimation() is called from here to sync
-        //music and animation properly
-        if(checkAnimationFileExist()) {
-            lockDevice();
-            showShutdownAnimation();
-
-            if (!isSilentMode()
-                    && (shutDownFile = getShutdownMusicFilePath()) != null) {
-                isShutdownMusicPlaying = true;
-                shutdownMusicHandler.obtainMessage(0, shutDownFile).sendToTarget();
-            }
-        }
 
         Log.i(TAG, "wait for shutdown music");
         final long endTimeForMusic = SystemClock.elapsedRealtime() + MAX_BROADCAST_TIME;
@@ -827,6 +821,30 @@ public final class ShutdownThread extends Thread {
         PowerManagerService.lowLevelShutdown();
     }
 
+    private static void deviceRebootOrShutdown(boolean reboot, String reason) {
+        Class<?> cl;
+        PathClassLoader oemClassLoader = new PathClassLoader("/system/framework/oem-services.jar",
+            ClassLoader.getSystemClassLoader());
+        String deviceShutdownClassName = "com.qti.server.power.ShutdownOem";
+        try{
+            cl = Class.forName(deviceShutdownClassName);
+            Method m;
+            try {
+                m = cl.getMethod("rebootOrShutdown", new Class[] {boolean.class, String.class});
+                m.invoke(cl.newInstance(), reboot, reason);
+            } catch (NoSuchMethodException ex) {
+                Log.e(TAG, "rebootOrShutdown method not found in class "
+                        + deviceShutdownClassName);
+            } catch (Exception ex) {
+                Log.e(TAG, "Unknown exception hit while trying to invoke rebootOrShutdown");
+            }
+        } catch(ClassNotFoundException e) {
+            Log.e(TAG, "Unable to find class " + deviceShutdownClassName);
+        } catch (Exception e) {
+            Log.e(TAG, "Unknown exception while trying to invoke rebootOrShutdown");
+        }
+    }
+
     private void uncrypt() {
         Log.i(TAG, "Calling uncrypt and monitoring the progress...");
 
@@ -905,26 +923,6 @@ public final class ShutdownThread extends Thread {
         }
     }
 
-    private static void deviceRebootOrShutdown(boolean reboot, String reason) {
-        Class<?> cl;
-        String deviceShutdownClassName = "com.qti.server.power.ShutdownOem";
-        try {
-            cl = Class.forName(deviceShutdownClassName);
-            Method m;
-                try {
-                    m = cl.getMethod("rebootOrShutdown", new Class[] {boolean.class, String.class});
-                    m.invoke(cl.newInstance(), reboot, reason);
-                } catch (NoSuchMethodException ex) {
-                    Log.e(TAG, "rebootOrShutdown method not found in class " + deviceShutdownClassName);
-                } catch (Exception ex) {
-                    Log.e(TAG, "Unknown exception hit while trying to invode rebootOrShutdown");
-                }
-        } catch (ClassNotFoundException e) {
-            Log.e(TAG, "Unable to find class " + deviceShutdownClassName);
-        } catch (Exception e) {
-            Log.e(TAG, "Unknown exception while trying to invoke rebootOrShutdown");
-        }
-    }
 
     private static boolean checkAnimationFileExist() {
         if (new File(OEM_BOOTANIMATION_FILE).exists()
