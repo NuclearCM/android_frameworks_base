@@ -71,26 +71,12 @@ public class TunerFragment extends PreferenceFragment {
                 return true;
             }
         });
-        mBatteryPct = (SwitchPreference) findPreference(KEY_BATTERY_PCT);
-        if (Settings.Secure.getInt(getContext().getContentResolver(), SETTING_SEEN_TUNER_WARNING,
-                0) == 0) {
-            new AlertDialog.Builder(getContext())
-                    .setTitle(R.string.tuner_warning_title)
-                    .setMessage(R.string.tuner_warning)
-                    .setPositiveButton(R.string.got_it, new OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            Settings.Secure.putInt(getContext().getContentResolver(),
-                                    SETTING_SEEN_TUNER_WARNING, 1);
-                        }
-                    }).show();
-        }
+
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        updateBatteryPct();
 
         registerPrefs(getPreferenceScreen());
         MetricsLogger.visibility(getContext(), MetricsLogger.TUNER, true);
@@ -141,11 +127,6 @@ public class TunerFragment extends PreferenceFragment {
         return super.onOptionsItemSelected(item);
     }
 
-    private void updateBatteryPct() {
-        mBatteryPct.setOnPreferenceChangeListener(null);
-        mBatteryPct.setOnPreferenceChangeListener(mBatteryPctChange);
-    }
-
     private final class SettingObserver extends ContentObserver {
         public SettingObserver() {
             super(new Handler());
@@ -154,7 +135,7 @@ public class TunerFragment extends PreferenceFragment {
         @Override
         public void onChange(boolean selfChange, Uri uri, int userId) {
             super.onChange(selfChange, uri, userId);
-            updateBatteryPct();
+            
         }
     }
 

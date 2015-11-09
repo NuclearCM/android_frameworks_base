@@ -164,8 +164,8 @@ public final class ShutdownThread extends Thread {
     private static boolean isAdvancedRebootPossible(final Context context) {
         KeyguardManager km = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
         boolean keyguardLocked = km.inKeyguardRestrictedInputMode() && km.isKeyguardSecure();
-        boolean advancedRebootEnabled = Settings.Secure.getInt(context.getContentResolver(),
-            Settings.Secure.ADVANCED_REBOOT, 0) == 1;
+        boolean advancedRebootEnabled = context.getResources().getBoolean(
++            com.android.internal.R.bool.config_advanced_reboot);
         boolean isPrimaryUser = UserHandle.getCallingUserId() == UserHandle.USER_OWNER;
 
         return advancedRebootEnabled && !keyguardLocked && isPrimaryUser;
