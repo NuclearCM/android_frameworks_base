@@ -1358,7 +1358,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         mNavigationBarView.reorient();
 
         mNavigationBarView.setListeners(mRecentsClickListener, mRecentsPreloadOnTouchListener,
-                mLongPressBackRecentsListener, mHomeActionListener);
+                mLongPressBackRecentsListener, mHomeActionListener, mLongPressHomeListener);
         mAssistManager.onConfigurationChanged();
     }
 
@@ -1981,6 +1981,9 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
         final boolean hasBackdrop = backdropBitmap != null;
         mKeyguardShowingMedia = hasBackdrop;
+        if (mStatusBarWindowManager != null) {
+            mStatusBarWindowManager.setShowingMedia(mKeyguardShowingMedia);
+        }
 
         if ((hasBackdrop || DEBUG_MEDIA_FAKE_ARTWORK)
                 && (mState == StatusBarState.KEYGUARD || mState == StatusBarState.SHADE_LOCKED)
@@ -2229,6 +2232,10 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
     public boolean isWakeUpComingFromTouch() {
         return mWakeUpComingFromTouch;
+    }
+
+    void setBlur(float b){
+        mStatusBarWindowManager.setBlur(b);
     }
 
     public boolean isFalsingThresholdNeeded() {
@@ -3198,7 +3205,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
     private void addStatusBarWindow() {
         makeStatusBarView();
         mStatusBarWindow.addContent(mStatusBarWindowContent);
-        mStatusBarWindowManager = new StatusBarWindowManager(mContext);
+        mStatusBarWindowManager = new StatusBarWindowManager(mContext, mKeyguardMonitor);
+        mStatusBarWindowManager.setShowingMedia(mKeyguardShowingMedia);
         mStatusBarWindowManager.add(mStatusBarWindow, getStatusBarHeight());
     }
 
@@ -4128,6 +4136,10 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         if (mGestureWakeLock.isHeld()) {
             mGestureWakeLock.release();
         }
+    }
+
+    boolean isSecure() {
+        return mStatusBarKeyguardViewManager != null && mStatusBarKeyguardViewManager.isSecure();
     }
 
     public long calculateGoingToFullShadeDelay() {
