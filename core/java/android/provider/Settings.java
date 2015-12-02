@@ -2520,6 +2520,13 @@ public final class Settings {
         public static final String BUTTON_BRIGHTNESS = "button_brightness";
 
         /**
+         * Select performance app. 1 = Kernel Adiutor, 2 = Synapse
+         *
+         * @hide
+         */
+        public static final String PERFORMANCE_APP = "performance_app";
+
+        /**
          * The time in ms to keep the button backlight on after pressing a button.
          * A value of 0 will keep the buttons on for as long as the screen is on.
          * @deprecated
@@ -3837,6 +3844,7 @@ public final class Settings {
          * @hide
          */
         public static final String[] SETTINGS_TO_RESET = {
+            PERFORMANCE_APP
         };
 
         // Settings moved to Settings.Secure

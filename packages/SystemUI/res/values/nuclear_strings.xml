@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TeamNuclear
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    
+    <!-- OnTheSpot: Title of the performance app feature for the reset dialog. [CHAR LIMIT=NONE] -->
+    <string name="performance_app">Performance APP</string>
+
+ </resources>
