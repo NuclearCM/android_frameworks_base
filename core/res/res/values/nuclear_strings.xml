@@ -5,8 +5,4 @@
     <!-- Global Actions -->
     <string name="global_action_search">Search</string>
     <string name="global_action_voicesearch">Voice Search</string>
-<!-- OnTheSpot settings confirmation dialog. When user interactions with the system can modify the user experience. -->
-    <string name="setting_confirmation_always">Always</string>
-    <string name="setting_confirmation_just_once">Just once</string>
-    <string name="setting_confirmation_never">Never</string>
 </resources>

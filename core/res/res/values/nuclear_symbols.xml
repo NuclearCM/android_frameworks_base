@@ -21,10 +21,4 @@
   <java-symbol type="drawable" name="ic_lock_user" />
   <java-symbol type="drawable" name="ic_lock_assist" />
   <java-symbol type="drawable" name="ic_lock_voice" />
-
-
-<!-- OnTheSpot settings confirmation dialog -->
-  <java-symbol type="string" name="setting_confirmation_always" />
-  <java-symbol type="string" name="setting_confirmation_just_once" />
-  <java-symbol type="string" name="setting_confirmation_never" />
 </resources>
