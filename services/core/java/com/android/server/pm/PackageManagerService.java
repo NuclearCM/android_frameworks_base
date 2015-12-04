@@ -7837,9 +7837,8 @@ public class PackageManagerService extends IPackageManager.Stub {
                             // Do not stop a pkg installation just because of one bad theme
                             // Also we don't break here because we should try to compile other
                             // themes
-                            Slog.w(TAG, "Unable to compile " + themePkg.packageName
+                            Log.e(TAG, "Unable to compile " + themePkg.packageName
                                     + " for target " + pkg.packageName, e);
-                            themePkg.mOverlayTargets.remove(pkg.packageName);
                         }
                     }
                 }
@@ -7852,10 +7851,9 @@ public class PackageManagerService extends IPackageManager.Stub {
             }
 
             // Generate Idmaps and res tables if pkg is a theme
-            Iterator<String> iterator = pkg.mOverlayTargets.iterator();
-            while(iterator.hasNext()) {
-                String target = iterator.next();
+            for(String target : pkg.mOverlayTargets) {
                 Exception failedException = null;
+                int failReason = 0;
 
                 insertIntoOverlayMap(target, pkg);
                 if (isBootScan && mBootThemeConfig != null &&
@@ -7866,17 +7864,21 @@ public class PackageManagerService extends IPackageManager.Stub {
                         compileResourcesAndIdmapIfNeeded(mPackages.get(target), pkg);
                     } catch (IdmapException e) {
                         failedException = e;
+                        failReason = PackageManager.INSTALL_FAILED_THEME_IDMAP_ERROR;
                     } catch (AaptException e) {
                         failedException = e;
+                        failReason = PackageManager.INSTALL_FAILED_THEME_AAPT_ERROR;
                     } catch (Exception e) {
                         failedException = e;
+                        failReason = PackageManager.INSTALL_FAILED_THEME_UNKNOWN_ERROR;
                     }
 
                     if (failedException != null) {
-                        Slog.w(TAG, "Unable to process theme " + pkgName + " for " + target,
-                                failedException);
-                        // remove target from mOverlayTargets
-                        iterator.remove();
+                        Log.w(TAG, "Unable to process theme " + pkgName, failedException);
+                        uninstallThemeForAllApps(pkg);
+                        deletePackageLI(pkg.packageName, null, true, null, null, 0, null, false);
+                        throw new PackageManagerException(failReason,
+                                "Unable to process theme " + pkgName, failedException);
                     }
                 }
             }
@@ -8164,7 +8166,9 @@ public class PackageManagerService extends IPackageManager.Stub {
     }
 
     private void compileResourcesAndIdmapIfNeeded(PackageParser.Package targetPkg,
-            PackageParser.Package themePkg) throws IdmapException, AaptException, IOException {
+                                               PackageParser.Package themePkg)
+            throws IdmapException, AaptException, IOException, Exception
+    {
         if (!shouldCreateIdmap(targetPkg, themePkg)) {
             return;
         }
@@ -8182,7 +8186,7 @@ public class PackageManagerService extends IPackageManager.Stub {
     }
 
     private void compileResourcesIfNeeded(String target, PackageParser.Package pkg)
-        throws AaptException, IOException
+        throws AaptException, IOException, Exception
     {
         ThemeUtils.createCacheDirIfNotExists();
 
@@ -8197,8 +8201,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         compileResources(target, pkg);
     }
 
-    private void compileResources(String target, PackageParser.Package pkg)
-            throws IOException, AaptException {
+    private void compileResources(String target, PackageParser.Package pkg) throws Exception {
         if (DEBUG_PACKAGE_SCANNING) Log.d(TAG, "  Compile resource table for " + pkg.packageName);
         //TODO: cleanup this hack. Modify aapt? Aapt uses the manifests package name
         //when creating the resource table. We care about the resource table's name because
@@ -8260,7 +8263,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         }
     }
 
-    private boolean hasCommonResources(PackageParser.Package pkg) throws IOException {
+    private boolean hasCommonResources(PackageParser.Package pkg) throws Exception {
         boolean ret = false;
         // check if assets/overlays/common exists in this theme
         AssetManager assets = new AssetManager();
@@ -8272,7 +8275,7 @@ public class PackageManagerService extends IPackageManager.Stub {
     }
 
     private void compileResourcesWithAapt(String target, PackageParser.Package pkg)
-            throws IOException, AaptException {
+            throws Exception {
         String internalPath = APK_PATH_TO_OVERLAY + target + File.separator;
         String resPath = ThemeUtils.getTargetCacheDir(target, pkg);
         final int sharedGid = UserHandle.getSharedAppGid(pkg.applicationInfo.uid);
@@ -8340,7 +8343,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         f.delete();
     }
 
-    private void createTempManifest(String pkgName) throws IOException {
+    private void createTempManifest(String pkgName) throws Exception {
         StringBuilder manifest = new StringBuilder();
         manifest.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
         manifest.append("<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"");
@@ -17565,26 +17568,29 @@ public class PackageManagerService extends IPackageManager.Stub {
             }
         }
 
+        int errorCode = 0;
         // Generate Idmaps and res tables if pkg is a theme
-        Iterator<String> iterator = pkg.mOverlayTargets.iterator();
-        while(iterator.hasNext()) {
-            String target = iterator.next();
+        for(String target : pkg.mOverlayTargets) {
             Exception failedException = null;
             try {
                 compileResourcesAndIdmapIfNeeded(mPackages.get(target), pkg);
             } catch (IdmapException e) {
                 failedException = e;
+                errorCode = PackageManager.INSTALL_FAILED_THEME_IDMAP_ERROR;
             } catch (AaptException e) {
                 failedException = e;
+                errorCode = PackageManager.INSTALL_FAILED_THEME_AAPT_ERROR;
             } catch (Exception e) {
                 failedException = e;
+                errorCode = PackageManager.INSTALL_FAILED_THEME_UNKNOWN_ERROR;
             }
 
             if (failedException != null) {
-                Slog.w(TAG, "Unable to process theme " + pkg.packageName + " for " + target,
+                Log.e(TAG, "Unable to process theme, uninstalling " + pkg.packageName,
                       failedException);
-                // remove target from mOverlayTargets
-                iterator.remove();
+                uninstallThemeForAllApps(pkg);
+                deletePackageX(themePkgName, getCallingUid(), PackageManager.DELETE_ALL_USERS);
+                return errorCode;
             }
         }
 
