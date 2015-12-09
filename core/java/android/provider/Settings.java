@@ -3764,7 +3764,7 @@ public final class Settings {
          */
         public static final String APP_SIDEBAR_SHOW_TRIGGER = "app_sidebar_show_trigger";
 
-                 /**
+        /**
          * Alternative recent apps integration using OmniSwitch
          * @hide
          */
@@ -3775,6 +3775,12 @@ public final class Settings {
          * @hide
          */
         public static final String RECENTS_FULL_SCREEN = "recents_full_screen";
+
+        /**
+         * Number of columns in Settings TeamNuclear
+         * @hide
+         */
+        public static final String COLUM_NUMBER = "colum_number";
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings
