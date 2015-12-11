@@ -477,14 +477,17 @@ public class PhoneStatusBarPolicy implements Callback {
     };
 
     private void updateSu() {
+<<<<<<< HEAD
         mService.setIconVisibility(SLOT_SU, mSuController.hasActiveSessions() && mSuIndicatorVisible);
-
+=======
+        mService.setIconVisibility(SLOT_SU, mSuController.hasActiveSessions());
         final int userId = UserHandle.myUserId();
         if (isSuEnabledForUser(userId)) {
             publishSuCustomTile();
         } else {
             unpublishSuCustomTile();
         }
+>>>>>>> a037ad401e4a78ce22a9ec2dada8ff3593aa8fa4
     }
 
     private final CastController.Callback mCastCallback = new CastController.Callback() {
