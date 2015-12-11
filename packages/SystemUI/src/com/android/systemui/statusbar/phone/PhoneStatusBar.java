@@ -21,6 +21,7 @@ import static com.android.systemui.settings.BrightnessController.BRIGHTNESS_ADJ_
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.animation.TimeInterpolator;
 import android.annotation.ChaosLab;
 import android.annotation.ChaosLab.Classification;
 import android.annotation.NonNull;
@@ -56,10 +57,13 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.PorterDuff.Mode;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.inputmethodservice.InputMethodService;
+import android.net.Uri;
 import android.media.AudioAttributes;
 import android.media.MediaMetadata;
 import android.media.session.MediaController;
@@ -3543,7 +3547,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         if (mStatusBarView == null) return;
         ContentResolver resolver = mContext.getContentResolver();
         nrrLogo = (ImageView) mStatusBarView.findViewById(R.id.nrr_logo);
-        //nrrLogo.setColorFilter(color, Mode.SRC_IN);
+        nrrLogo.setColorFilter(color, Mode.SRC_IN);
         if (nrrLogo != null) {
             nrrLogo.setVisibility(show ? (mNRRlogo ? View.VISIBLE : View.GONE) : View.GONE);
         }
