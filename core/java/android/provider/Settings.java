@@ -2396,6 +2396,12 @@ public final class Settings {
             }
         };
 
+         /**
+         * @hide
+         */
+        public static final String SHOW_SU_INDICATOR = "show_su_indicator";
+
+
         /**
          * Scaling factor for fonts, float.
          */
@@ -3809,6 +3815,19 @@ public final class Settings {
          * @hide
          */
         public static final String STATUS_BAR_CARRIER_COLOR = "status_bar_carrier_color";
+
+        /**
+         * Statusbar RR logo
+         * @hide
+         */
+        public static final String STATUS_BAR_NRR_LOGO = "status_bar_nrr_logo";
+
+ 	/**
+         * Statusbar RR logo color setting
+         * @hide
+         */
+
+	public static final String STATUS_BAR_NRR_LOGO_COLOR = "status_bar_nrr_logo_color";
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings

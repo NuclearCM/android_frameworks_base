@@ -21,6 +21,7 @@ import static com.android.systemui.settings.BrightnessController.BRIGHTNESS_ADJ_
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.animation.TimeInterpolator;
 import android.annotation.ChaosLab;
 import android.annotation.ChaosLab.Classification;
 import android.annotation.NonNull;
@@ -56,10 +57,13 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.PorterDuff.Mode;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.inputmethodservice.InputMethodService;
+import android.net.Uri;
 import android.media.AudioAttributes;
 import android.media.MediaMetadata;
 import android.media.session.MediaController;
@@ -375,6 +379,11 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
     private boolean mShowCarrierInPanel = false;
     boolean mExpandedVisible;
 
+    // RR logo
+    private boolean mNRRlogo;
+    private ImageView nrrLogo;
+    private int mNRRLogoColor;
+
     private int mNavigationBarWindowState = WINDOW_STATE_SHOWING;
 
     private int mStatusBarHeaderHeight;
@@ -465,6 +474,12 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.APP_SIDEBAR_POSITION),
                     false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_NRR_LOGO),
+                    false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_NRR_LOGO_COLOR),
+                    false, this, UserHandle.USER_ALL);
             update();
         }
 
@@ -486,7 +501,11 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             mBrightnessControl = CMSettings.System.getIntForUser(
                     resolver, CMSettings.System.STATUS_BAR_BRIGHTNESS_CONTROL, 0,
                     UserHandle.USER_CURRENT) == 1;
-
+            mNRRlogo = Settings.System.getIntForUser(resolver,
+                    Settings.System.STATUS_BAR_NRR_LOGO, 0, mCurrentUserId) == 1;
+            mNRRLogoColor = Settings.System.getIntForUser(resolver,
+                    Settings.System.STATUS_BAR_NRR_LOGO_COLOR, 0xFFFFFFFF, mCurrentUserId);
+            showNRRLogo(mNRRlogo, mNRRLogoColor);
             if (mNavigationBarView != null) {
                 boolean navLeftInLandscape = CMSettings.System.getIntForUser(resolver,
                         CMSettings.System.NAVBAR_LEFT_IN_LANDSCAPE, 0, UserHandle.USER_CURRENT) == 1;
@@ -550,6 +569,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         mNavigationBarView.setBar(this);
         addNavigationBar();
     }
+
 
     // ensure quick settings is disabled until the current user makes it through the setup wizard
     private boolean mUserSetup = false;
@@ -3521,6 +3541,17 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             }
         }
     };
+
+
+    public void showNRRLogo(boolean show , int color) {
+        if (mStatusBarView == null) return;
+        ContentResolver resolver = mContext.getContentResolver();
+        nrrLogo = (ImageView) mStatusBarView.findViewById(R.id.nrr_logo);
+        nrrLogo.setColorFilter(color, Mode.SRC_IN);
+        if (nrrLogo != null) {
+            nrrLogo.setVisibility(show ? (mNRRlogo ? View.VISIBLE : View.GONE) : View.GONE);
+        }
+    }
 
     private void resetUserExpandedStates() {
         ArrayList<Entry> activeNotifications = mNotificationData.getActiveNotifications();
