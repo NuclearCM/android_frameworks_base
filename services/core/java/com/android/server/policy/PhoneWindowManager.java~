@@ -5839,7 +5839,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             interceptScreenrecordChord();
                         }
                     } else {
-                        mVolumeUpKeyTriggered = false;
+                        mmVolumeUpKeyTriggered = false;
                         cancelPendingScreenshotChordAction();
 			cancelPendingScreenrecordChordAction();
                     }
