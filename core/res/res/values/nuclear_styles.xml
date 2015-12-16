@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-/* Copyright 2015, SlimRoms project
+/* Copyright 2015, NucleaRomReborn
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 -->
 <resources>
 
-    <!-- Slim recent app screen animation 
+    <!-- Slim recent app screen animation -->
     <style name="Animation.RecentScreen">
         <item name="windowEnterAnimation">@anim/recent_screen_enter</item>
         <item name="windowExitAnimation">@anim/recent_screen_exit</item>
@@ -27,5 +27,5 @@
         <item name="windowEnterAnimation">@anim/recent_screen_enter_left</item>
         <item name="windowExitAnimation">@anim/recent_screen_exit_left</item>
     </style>
--->
+
 </resources>
