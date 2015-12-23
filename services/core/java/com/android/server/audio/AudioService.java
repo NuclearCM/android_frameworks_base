@@ -608,7 +608,6 @@ public class AudioService extends IAudioService.Stub {
         return "card=" + card + ";device=" + device + ";";
     }
 
-    private boolean mLinkNotificationWithVolume;
 
     ///////////////////////////////////////////////////////////////////////////
     // Construction

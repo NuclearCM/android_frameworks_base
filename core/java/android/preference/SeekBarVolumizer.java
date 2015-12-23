@@ -92,7 +92,7 @@ public class SeekBarVolumizer implements OnSeekBarChangeListener, Handler.Callba
         mAffectedByRingerMode = mAudioManager.isStreamAffectedByRingerMode(mStreamType);
         mIsRing = isRing(mStreamType);
         mIsNotification = isNotification(mStreamType);
-        mNotificationOrRing = mIsRing || mIsNotification;
+	mNotificationOrRing = isNotificationOrRing(mStreamType);
         if (mNotificationOrRing) {
             mRingerMode = mAudioManager.getRingerModeInternal();
         }
@@ -125,6 +125,10 @@ public class SeekBarVolumizer implements OnSeekBarChangeListener, Handler.Callba
 
     private static boolean isNotification(int stream) {
         return stream == AudioManager.STREAM_NOTIFICATION;
+    }
+
+    private static boolean isNotificationOrRing(int stream) {
+        return stream == AudioManager.STREAM_RING || stream == AudioManager.STREAM_NOTIFICATION;
     }
 
     private boolean isNotificationStreamLinked() {
@@ -412,46 +416,33 @@ public class SeekBarVolumizer implements OnSeekBarChangeListener, Handler.Callba
             }
         }
 
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            if (AudioManager.VOLUME_CHANGED_ACTION.equals(action)) {
-                int streamType = intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, -1);
-                int streamValue = intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_VALUE, -1);
-/*<<<<<<< HEAD
-                boolean streamMatch = streamType == mStreamType;
-                if (mSeekBar != null && streamMatch && streamValue != -1) {
-                    final boolean muted = mAudioManager.isStreamMute(mStreamType)
-                            || streamValue == 0;
-                    mUiHandler.postUpdateSlider(streamValue, mLastAudibleStreamVolume, muted);
-                }
-=======*/
-                updateVolumeSlider(streamType, streamValue);
-//>>>>>>> 0a8e142de7c27a394b2480fdb1512f1a5d9f8742
-            } else if (AudioManager.INTERNAL_RINGER_MODE_CHANGED_ACTION.equals(action)) {
-                if (mNotificationOrRing) {
-                    mRingerMode = mAudioManager.getRingerModeInternal();
-                }
-                if (mAffectedByRingerMode) {
-                    updateSlider();
-                }
-            } else if (AudioManager.STREAM_DEVICES_CHANGED_ACTION.equals(action)) {
-                int streamType = intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, -1);
-                int streamVolume = mAudioManager.getStreamVolume(streamType);
-                updateVolumeSlider(streamType, streamVolume);
-            } else if (NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED.equals(action)) {
-                mZenMode = mNotificationManager.getZenMode();
-                updateSlider();
-            }
-        }
+         @Override
+         public void onReceive(Context context, Intent intent) {
+             final String action = intent.getAction();
+             if (AudioManager.VOLUME_CHANGED_ACTION.equals(action)) {
+                 int streamType = intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, -1);
+                 int streamValue = intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_VALUE, -1);
+                 updateVolumeSlider(streamType, streamValue);
+             } else if (AudioManager.INTERNAL_RINGER_MODE_CHANGED_ACTION.equals(action)) {
+                 if (mNotificationOrRing) {
+                     mRingerMode = mAudioManager.getRingerModeInternal();
+                 }
+                 if (mAffectedByRingerMode) {
+                     updateSlider();
+                 }
+             } else if (AudioManager.STREAM_DEVICES_CHANGED_ACTION.equals(action)) {
+                 int streamType = intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, -1);
+                 int streamVolume = mAudioManager.getStreamVolume(streamType);
+                 updateVolumeSlider(streamType, streamVolume);
+             } else if (NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED.equals(action)) {
+                 mZenMode = mNotificationManager.getZenMode();
+                 updateSlider();
+             }
+         }
 
         private void updateVolumeSlider(int streamType, int streamValue) {
-/*<<<<<<< HEAD
-            final boolean streamMatch = mNotificationOrRing ? isNotification(streamType)
-=======*/
-            final boolean streamMatch = mNotificationOrRing && isNotificationStreamLinked()
+             final boolean streamMatch = mNotificationOrRing && isNotificationStreamLinked()
                     ? isNotificationOrRing(streamType)
-//>>>>>>> 86595f912d8593a9581a8bd99f1849b8e4505de3
                     : (streamType == mStreamType);
             if (mSeekBar != null && streamMatch && streamValue != -1) {
                 final boolean muted = mAudioManager.isStreamMute(mStreamType)
