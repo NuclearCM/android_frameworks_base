@@ -565,16 +565,16 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
     @Override
     public void onClick(View v) {
         if (v == mSettingsButton) {
-/*<<<<<<< HEAD
+
             startSettingsActivity();
-=======*/
+/*
             if (mSettingsButton.isTunerClick()) {
                 mSettingsButton.consumeClick();
                 mQSPanel.getHost().setEditing(!mQSPanel.getHost().isEditing());
             } else {
                 startSettingsActivity();
             }
-//>>>>>>> 0a8e142de7c27a394b2480fdb1512f1a5d9f8742
+*/
         } else if (v == mSystemIconsSuperContainer) {
             startBatteryActivity();
         } else if (v == mAlarmStatus && mNextAlarm != null) {
