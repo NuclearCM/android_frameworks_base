@@ -44,15 +44,13 @@ public class TunerFragment extends PreferenceFragment {
 
     private static final String TAG = "TunerFragment";
 
+
     private static final String KEY_QS_TUNER = "qs_tuner";
     private static final String KEY_BATTERY_PCT = "battery_pct";
 
+
     public static final String SETTING_SEEN_TUNER_WARNING = "seen_tuner_warning";
 
-
-    private final SettingObserver mSettingObserver = new SettingObserver();
-
-    private SwitchPreference mBatteryPct;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,11 +59,12 @@ public class TunerFragment extends PreferenceFragment {
         getActivity().getActionBar().setDisplayHomeAsUpEnabled(true);
         setHasOptionsMenu(true);
 
-        findPreference(KEY_QS_TUNER).setOnPreferenceClickListener(new OnPreferenceClickListener() {
+        findPreference(KEY_STATUSBAR_BLACKLIST).setOnPreferenceClickListener(new OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
                 FragmentTransaction ft = getFragmentManager().beginTransaction();
-                ft.replace(android.R.id.content, new QsTuner(), "QsTuner");
+                ft.replace(android.R.id.content, new StatusBarIconBlacklistFragment(),
+                        "StatusBarBlacklist");
                 ft.addToBackStack(null);
                 ft.commit();
                 return true;
@@ -85,7 +84,6 @@ public class TunerFragment extends PreferenceFragment {
     @Override
     public void onPause() {
         super.onPause();
-        getContext().getContentResolver().unregisterContentObserver(mSettingObserver);
 
         unregisterPrefs(getPreferenceScreen());
         MetricsLogger.visibility(getContext(), MetricsLogger.TUNER, false);
