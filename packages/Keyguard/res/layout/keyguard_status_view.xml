@@ -41,12 +41,13 @@
             android:layout_gravity="center_horizontal"
             android:textColor="@color/clock_white"
             android:singleLine="true"
-            style="@style/widget_big_thin"
+	    style="@style/widget_big_thin"
             android:format12Hour="@string/keyguard_widget_12_hours_format"
             android:format24Hour="@string/keyguard_widget_24_hours_format"
             android:layout_marginBottom="@dimen/bottom_text_spacing_digital" />
 
         <include layout="@layout/keyguard_status_area" />
+        <include layout="@layout/keyguard_weather_view" />
         <TextView
             android:id="@+id/owner_info"
             android:layout_marginLeft="16dp"
@@ -60,6 +61,11 @@
             android:letterSpacing="0.05"
             android:ellipsize="marquee"
             android:singleLine="true" />
+
+        <include layout="@layout/keyguard_shortcuts"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"/>
 
     </LinearLayout>
 </com.android.keyguard.KeyguardStatusView>

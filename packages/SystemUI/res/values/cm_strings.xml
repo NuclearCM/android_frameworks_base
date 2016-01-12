@@ -215,4 +215,7 @@
     <string name="quick_settings_tiles_category_system">System tiles</string>
     <!-- detail header when adding a tile -->
     <string name="quick_settings_tiles_add_tiles">Add a tile</string>
+
+    <!-- Weather string format in expanded statusbar header -->
+    <string name="weather_info_not_available">Weather informations not available</string>
 </resources>
