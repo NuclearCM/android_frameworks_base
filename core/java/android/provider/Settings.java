@@ -3954,7 +3954,7 @@ public final class Settings {
          * Sound ScreenShot TeamNuclear
          * @hide
          */
-        public static final String SCREENSHOT_SOUNDS = "screenshot_sounds";
+        public static final String SCREENSHOT_SOUND = "screenshot_sound";
 
  	/**
          * Three Finger Gesture from Oppo
