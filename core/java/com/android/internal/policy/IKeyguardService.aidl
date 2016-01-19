@@ -15,7 +15,6 @@
  */
 package com.android.internal.policy;
 
-import android.graphics.Bitmap;
 
 import com.android.internal.policy.IKeyguardDrawnCallback;
 import com.android.internal.policy.IKeyguardStateCallback;
@@ -97,5 +96,4 @@ oneway interface IKeyguardService {
      */
     void onActivityDrawn();
 
-    oneway void setBackgroundBitmap(in Bitmap bmp);
 }
