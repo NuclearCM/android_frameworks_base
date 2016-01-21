@@ -146,6 +146,4 @@
   <java-symbol type="style" name="PowerMenuflyAnimation" />
   <java-symbol type="style" name="PowerMenuCardAnimation" />
 
-  <java-symbol type="array" name="anim_controls_entries" />
-
 </resources>
