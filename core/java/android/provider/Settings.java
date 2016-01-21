@@ -2427,7 +2427,6 @@ public final class Settings {
         public static final String LOCK_PATTERN_TACTILE_FEEDBACK_ENABLED =
             "lock_pattern_tactile_feedback_enabled";
 
-
          /**
          * Whether to use the custom quick unlock screen control
          * @hide
@@ -4494,7 +4493,15 @@ public final class Settings {
          * whether to enable torch on lockscreen
          * @hide
          */
-        public static final String KEYGUARD_TOGGLE_TORCH = "keyguard_toggle_torch";
+        public static final String KEYGUARD_TOGGLE_TORCH = "keyguard_toggle_torch"; 
+
+        /**
+         * Whether to display set of animations when prompting the power menu
+         *
+         * @hide
+         */
+        public static final String POWER_MENU_ANIMATIONS = "power_menu_animations";
+
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings

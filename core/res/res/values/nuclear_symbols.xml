@@ -135,4 +135,8 @@
   <java-symbol type="drawable" name="ic_shortcut_action_search" />
 
 
+  <!-- Power menu Animations  -->
+  <java-symbol type="style" name="PowerMenuBottomAnimation" />
+  <java-symbol type="style" name="PowerMenuTopAnimation" />
+
 </resources>
