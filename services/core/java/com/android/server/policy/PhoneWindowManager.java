@@ -2383,9 +2383,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 mImmersiveModeConfirmation.loadSetting(mCurrentUserId);
             }
 
-            mBackKillTimeout = Settings.System.getInt(resolver,
-                    Settings.System.HOLD_BACK_TO_KILL_TIMEOUT, 750);
-
             mTorchEnabled = (Settings.System.getIntForUser(resolver,
                     Settings.System.KEYGUARD_TOGGLE_TORCH, 0, UserHandle.USER_CURRENT) == 1);
 
