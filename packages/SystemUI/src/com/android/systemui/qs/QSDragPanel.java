@@ -375,6 +375,7 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
             r.tile.setListening(mListening);
         }
         mFooter.setListening(mListening);
+        mQsPanelTop.setListening(mListening);
         if (mListening) {
             refreshAllTiles();
         }
@@ -511,6 +512,8 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
                     + tiles + "]");
         }
 
+        int currentViewPagerPage = mViewPager.getCurrentItem();
+
         if (mLastDragRecord != null && mRecords.indexOf(mLastDragRecord) == -1) {
             // the last removed record might be stored in mLastDragRecord if we just shifted
             // re-add it to the list so we'll clean it up below
@@ -526,6 +529,11 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
         while (iterator.hasPrevious()) {
             DragTileRecord dr = (DragTileRecord) iterator.previous();
 
+            if (dr.page >= 0) {
+                // clean up view
+                mPages.get(dr.page).removeView(dr.tileView);
+            }
+
             if (tiles.contains(dr.tile)) {
                 if (DEBUG_TILES) {
                     Log.i(TAG, "caching tile: " + dr.tile);
@@ -535,8 +543,6 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
                 if (DEBUG_TILES) {
                     Log.i(TAG, "removing tile: " + dr.tile);
                 }
-                // clean up view
-                mPages.get(dr.page).removeView(dr.tileView);
 
                 // remove record
                 iterator.remove();
@@ -546,19 +552,21 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
                     final int childCount = mPages.get(dr.page).getChildCount();
 
                     if (childCount == 0) {
-                        // if current page is the current max page COUNT (off by 1) then move back
                         final int currentIndex = mViewPager.getCurrentItem();
-                        if (currentIndex == (getCurrentMaxPageCount()) + (mEditing ? 1 : 0)) {
-                            mViewPager.setCurrentItem(currentIndex - 1, false);
-                            mPagerAdapter.startUpdate(mViewPager);
-                            final int pageIndex = mEditing ? currentIndex - 1 : currentIndex;
-                            mPages.remove(pageIndex);
-                            mPagerAdapter.finishUpdate(mViewPager);
-                            mPagerAdapter.notifyDataSetChanged();
+                        if (currentIndex > 0 && currentViewPagerPage == currentIndex) {
+                            // if we are about to remove the page we are currently on, move back
+                            currentViewPagerPage--;
                         }
+                        final int pageIndex = dr.page + (mEditing ? 1 : 0);
+                        mPagerAdapter.startUpdate(mViewPager);
+                        mPagerAdapter.destroyItem(mViewPager, pageIndex, mPages.get(dr.page));
+                        mPagerAdapter.finishUpdate(mViewPager);
+                        mPagerAdapter.notifyDataSetChanged();
                     }
                 }
             }
+            dr.page = -1;
+            dr.destinationPage = -1;
         }
 
         // at this point recordMap should have all retained tiles, no new or old tiles
@@ -567,7 +575,13 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
             Log.i(TAG, "record map delta: " + delta);
         }
         mRecords.ensureCapacity(tiles.size());
+
         mPagerAdapter.notifyDataSetChanged();
+
+        // even though we explicitly destroy old pages, without this call,
+        // the viewpager doesn't seem to want to pick up the fact that we have less pages
+        // and allows "empty" scrolls to the right where there is no page.
+        mViewPager.setAdapter(mPagerAdapter);
 
         // add new tiles
         for (int i = 0; i < tiles.size(); i++) {
@@ -600,10 +614,8 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
                     }
                     Collections.swap(mRecords, indexOf, i);
 
-                    record.destinationPage = tileDestPage;
-                    ensureDestinationPage(record);
                 }
-
+                record.destinationPage = tileDestPage;
             }
             if (record.page == -1) {
                 // add the view
@@ -615,6 +627,9 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
             }
         }
 
+        // restore the visible page
+        mViewPager.setCurrentItem(currentViewPagerPage, false);
+
         if (isShowingDetail()) {
             mDetail.bringToFront();
         }
@@ -622,16 +637,6 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
 
         refreshAllTiles();
         requestLayout();
-    }
-
-    private void ensureDestinationPage(DragTileRecord record) {
-        if (record.destinationPage != record.page) {
-            if (record.page >= 0) {
-                getPage(record.page).removeView(record.tileView);
-            }
-            getPage(record.destinationPage).addView(record.tileView);
-            record.page = record.destinationPage;
-        }
     }
 
     private DragTileRecord makeRecord(final QSTile<?> tile) {
@@ -728,13 +733,6 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
         mHost.remove(spec);
     }
 
-    public void ensurePagerState() {
-        if (!isShowingDetail()) {
-            final boolean pagingEnabled = getVisibleTilePageCount() > 1 || mDragging || mEditing;
-            mViewPager.setPagingEnabled(pagingEnabled);
-        }
-    }
-
     public int getTilesPerPage(boolean firstPage) {
         if ((!mFirstRowLarge && firstPage) || !firstPage) {
             return QSTileHost.TILES_PER_PAGE + 1;
@@ -758,7 +756,8 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
         mPageIndicator.measure(exactly(width), atMost(mPageIndicatorHeight));
         mFooter.getView().measure(exactly(width), MeasureSpec.UNSPECIFIED);
 
-        int h = mViewPager.getMeasuredHeight() + mPageIndicatorHeight;
+        int h = getRowTop(getCurrentMaxRow() + 1) + mPanelPaddingBottom;
+
         if (mFooter.hasFooter()) {
             h += mFooter.getView().getMeasuredHeight();
         }
@@ -853,12 +852,10 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
         if (!isShowingDetail() && !isClosingDetail()) {
             mQsPanelTop.bringToFront();
         }
-
-        ensurePagerState();
     }
 
     protected int getRowTop(int row) {
-        int baseHeight = mBrightnessView.getMeasuredHeight();
+        int baseHeight = mQsPanelTop.getMeasuredHeight();
         if (row <= 0) return baseHeight;
         return baseHeight + mLargeCellHeight - mDualTileUnderlap + (row - 1) * mCellHeight;
     }
@@ -1727,22 +1724,6 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
         }
     }
 
-    @Override
-    protected void setGridContentVisibility(boolean visible) {
-        int newVis = visible ? VISIBLE : INVISIBLE;
-        for (int i = 0; i < mRecords.size(); i++) {
-            TileRecord tileRecord = mRecords.get(i);
-            if (tileRecord.tileView.getVisibility() != GONE) {
-                tileRecord.tileView.setVisibility(newVis);
-            }
-        }
-        mQsPanelTop.setVisibility(showBrightnessSlider() ? newVis : GONE);
-        if (mGridContentVisible != visible) {
-            MetricsLogger.visibility(mContext, MetricsLogger.QS_PANEL, newVis);
-        }
-        mGridContentVisible = visible;
-    }
-
     public void updateResources() {
         final Resources res = mContext.getResources();
         final int columns = Math.max(1, res.getInteger(R.integer.quick_settings_num_columns));
@@ -1754,11 +1735,11 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
         mDualTileUnderlap = res.getDimensionPixelSize(R.dimen.qs_dual_tile_padding_vertical);
         mBrightnessPaddingTop = res.getDimensionPixelSize(R.dimen.qs_brightness_padding_top);
         mPageIndicatorHeight = res.getDimensionPixelSize(R.dimen.qs_panel_page_indicator_height);
+        if (mColumns != columns) {
+            mColumns = columns;
+            if (isLaidOut()) postInvalidate();
+        }
         if (isLaidOut()) {
-            if (mColumns != columns) {
-                mColumns = columns;
-                postInvalidate();
-            }
             for (TileRecord r : mRecords) {
                 r.tile.clearState();
             }
@@ -1771,6 +1752,12 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
 
     public boolean isAnimating(TileRecord t) {
         return mCurrentlyAnimating.contains(t);
+    }
+
+    public void cleanup() {
+        if (mSettingsObserver != null) {
+            mSettingsObserver.unobserve();
+        }
     }
 
     public static class TilesListAdapter extends BaseExpandableListAdapter
@@ -2104,6 +2091,10 @@ public class QSDragPanel extends QSPanel implements View.OnDragListener, View.On
 
     public boolean isDragRecordAttached() {
         return mRecords.indexOf(mDraggingRecord) >= 0;
+    }
+
+    public boolean isOnSettingsPage() {
+        return mEditing && mViewPager.getCurrentItem() == 0;
     }
 
     public void goToSettingsPage() {
