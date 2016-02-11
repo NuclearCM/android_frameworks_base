@@ -2014,6 +2014,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             haveEnableGesture = false;
             mWindowManagerFuncs.unregisterPointerEventListener(mOPGestures);
         }
+
     }
 
     private void updateKeyAssignments() {
