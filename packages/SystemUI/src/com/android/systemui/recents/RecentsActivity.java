@@ -444,6 +444,14 @@ public class RecentsActivity extends Activity implements RecentsView.RecentsView
     }
 
     @Override
+    protected void onResume() {
+        if (mConfig.searchBarEnabled && mConfig.launchedFromHome) {
+            overridePendingTransition(0, 0);
+        }
+        super.onResume();
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
         if (mAfterPauseRunnable != null) {
