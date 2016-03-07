@@ -26,7 +26,6 @@ import android.app.KeyguardManager;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.IBluetoothManager;
-import android.content.pm.ThemeUtils;
 import android.media.AudioAttributes;
 import android.nfc.NfcAdapter;
 import android.nfc.INfcAdapter;
@@ -81,6 +80,7 @@ import java.io.OutputStreamWriter;
 
 import com.android.internal.util.nuclear.Helpers;
 import com.android.internal.R;
+import org.cyanogenmod.internal.util.ThemeUtils;
 
 public final class ShutdownThread extends Thread {
     // constants
