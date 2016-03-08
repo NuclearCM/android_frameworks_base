@@ -29,6 +29,8 @@ import android.app.ActivityManager;
 import android.app.ActivityManagerNative;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.INotificationManager;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -66,6 +68,7 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.os.Vibrator;
 import android.provider.Settings;
+import android.provider.Settings.Global;
 import android.service.dreams.DreamService;
 import android.service.dreams.IDreamManager;
 import android.telephony.PhoneStateListener;
@@ -75,7 +78,6 @@ import android.text.TextUtils;
 import android.util.ArraySet;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -93,6 +95,7 @@ import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.ListView;
 import android.widget.TextView;
+
 import cyanogenmod.providers.CMSettings;
 
 import java.util.ArrayList;
@@ -139,6 +142,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     // Power menu customizations
     String mActions;
     private int mScreenshotDelay;
+
 
     /**
      * @param context everything needs a context :(
@@ -213,63 +217,19 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         awakenIfNecessary();
 	checkSettings();
         prepareDialog();
-        WindowManager.LayoutParams attrs = mDialog.getWindow().getAttributes();
+
+        // If we only have 1 item and it's a simple press action, just do this action.
+        if (mAdapter.getCount() == 1
+                && mAdapter.getItem(0) instanceof SinglePressAction
+                && !(mAdapter.getItem(0) instanceof LongPressAction)) {
+            ((SinglePressAction) mAdapter.getItem(0)).onPress();
+        } else {
+            WindowManager.LayoutParams attrs = mDialog.getWindow().getAttributes();
             attrs.setTitle("GlobalActions");
-
-        boolean isPrimary = UserHandle.getCallingUserId() == UserHandle.USER_OWNER;
-        int powermenuAnimations = isPrimary ? getPowermenuAnimations() : 0;
-
-        if (powermenuAnimations == 0) {
-         // default AOSP action
+            mDialog.getWindow().setAttributes(attrs);
+            mDialog.show();
+            mDialog.getWindow().getDecorView().setSystemUiVisibility(View.STATUS_BAR_DISABLE_EXPAND);
         }
-        if (powermenuAnimations == 1) {
-            attrs.windowAnimations = R.style.PowerMenuBottomAnimation;
-            attrs.gravity = Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL;
-        }
-        if (powermenuAnimations == 2) {
-            attrs.windowAnimations = R.style.PowerMenuTopAnimation;
-            attrs.gravity = Gravity.TOP|Gravity.CENTER_HORIZONTAL;
-        }
-        if (powermenuAnimations == 3) {
-                attrs.windowAnimations = R.style.PowerMenuRotateAnimation;
-                attrs.gravity = Gravity.CENTER_VERTICAL|Gravity.CENTER_HORIZONTAL;
-        }
-        if (powermenuAnimations == 4) {
-                attrs.windowAnimations = R.style.PowerMenuXylonAnimation;
-                attrs.gravity = Gravity.CENTER_VERTICAL|Gravity.CENTER_HORIZONTAL;
-        }
-        if (powermenuAnimations == 5) {
-                attrs.windowAnimations = R.style.PowerMenuTranslucentAnimation;
-                attrs.gravity = Gravity.CENTER_VERTICAL|Gravity.CENTER_HORIZONTAL;
-        }
-        if (powermenuAnimations == 6) {
-                attrs.windowAnimations = R.style.PowerMenuTnAnimation;
-                attrs.gravity = Gravity.CENTER_VERTICAL|Gravity.CENTER_HORIZONTAL;
-        }
-        if (powermenuAnimations == 7) {
-                attrs.windowAnimations = R.style.PowerMenuflyAnimation;
-                attrs.gravity = Gravity.CENTER_VERTICAL|Gravity.CENTER_HORIZONTAL;
-        }
-        if (powermenuAnimations == 8) {
-                attrs.windowAnimations = R.style.PowerMenuCardAnimation;
-                attrs.gravity = Gravity.CENTER_VERTICAL|Gravity.CENTER_HORIZONTAL;
-        }
-        if (powermenuAnimations == 9) {
-                attrs.windowAnimations = R.style.PowerMenuTranslucentAnimation;
-                attrs.gravity = Gravity.TOP|Gravity.CENTER_HORIZONTAL;
-        }
-        if (powermenuAnimations == 10) {
-                attrs.windowAnimations = R.style.PowerMenuTranslucentAnimation;
-                attrs.gravity = Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL;
-        }   
-        mDialog.getWindow().setAttributes(attrs);
-        mDialog.show();
-        mDialog.getWindow().getDecorView().setSystemUiVisibility(View.STATUS_BAR_DISABLE_EXPAND);
-    }
-
-    private int getPowermenuAnimations() {
-        return Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.POWER_MENU_ANIMATIONS, 0);
     }
 
     private Context getUiContext() {
@@ -369,6 +329,10 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                         Settings.Global.BUGREPORT_IN_POWER_MENU, 0) != 0 && isCurrentUserOwner()) {
                     mItems.add(getBugReportAction());
                 }
+            } else if (GLOBAL_ACTION_KEY_SILENT.equals(actionKey)) {
+                if (mShowSilentToggle) {
+                    mItems.add(mSilentModeAction);
+                }
             } else if (GLOBAL_ACTION_KEY_USERS.equals(actionKey)) {
                 List<UserInfo> users = ((UserManager) mContext.getSystemService(
                         Context.USER_SERVICE)).getUsers();
@@ -379,14 +343,10 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                 mItems.add(getSettingsAction());
             } else if (GLOBAL_ACTION_KEY_LOCKDOWN.equals(actionKey)) {
                 mItems.add(getLockdownAction());
-            } else if (GLOBAL_ACTION_KEY_ASSIST.equals(actionKey)) {
-                mItems.add(getAssistAction());
             } else if (GLOBAL_ACTION_KEY_VOICEASSIST.equals(actionKey)) {
                 mItems.add(getVoiceAssistAction());
-            } else if (GLOBAL_ACTION_KEY_SILENT.equals(actionKey)) {
-                if (mShowSilentToggle) {
-                    mItems.add(mSilentModeAction);
-                }
+            } else if (GLOBAL_ACTION_KEY_ASSIST.equals(actionKey)) {
+                mItems.add(getAssistAction());
             } else {
                 Log.e(TAG, "Invalid global action key " + actionKey);
             }
@@ -505,7 +465,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         };
     }
 
-    private Action getScreenrecordAction() {
+   private Action getScreenrecordAction() {
         return new SinglePressAction(com.android.internal.R.drawable.ic_lock_screenrecord,
                 R.string.global_action_screenrecord) {
 
@@ -522,7 +482,6 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
             }
         };
     }
-
 
     private Action getBugReportAction() {
         return new SinglePressAction(com.android.internal.R.drawable.ic_lock_bugreport,
@@ -604,7 +563,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
     private Action getAssistAction() {
         return new SinglePressAction(com.android.internal.R.drawable.ic_action_assist_focused,
-                R.string.global_action_search) {
+                R.string.global_action_assist) {
             @Override
             public void onPress() {
                 Intent intent = new Intent(Intent.ACTION_ASSIST);
@@ -626,7 +585,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
     private Action getVoiceAssistAction() {
         return new SinglePressAction(com.android.internal.R.drawable.ic_voice_search,
-                R.string.global_action_voicesearch) {
+                R.string.global_action_voice_assist) {
             @Override
             public void onPress() {
                 Intent intent = new Intent(Intent.ACTION_VOICE_ASSIST);
@@ -795,7 +754,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
                         /* wait for the dialog box to close */
                         try {
-                            Thread.sleep(mScreenshotDelay * 1000);
+			    Thread.sleep(mScreenshotDelay * 1000);
                         } catch (InterruptedException ie) {
                             // Do nothing
                         }
@@ -819,7 +778,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         }
     }
 
-    /**
+   /**
      * functions needed for taking screen record.
      */
     final Object mScreenrecordLock = new Object();
@@ -894,7 +853,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         }
     }
 
-   private void checkSettings() {
+  private void checkSettings() {
         mScreenshotDelay = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.SCREENSHOT_DELAY, 1);
     }
@@ -1281,9 +1240,9 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         }
     }
 
-    private static class SilentModeTriStateAction implements Action, View.OnClickListener {
+    private final class SilentModeTriStateAction implements Action, View.OnClickListener {
 
-        private final int[] ITEM_IDS = { R.id.option1, R.id.option2, R.id.option3 };
+        private final int[] ITEM_IDS = { R.id.option1, R.id.option2, R.id.option3, R.id.option4 };
 
         private final AudioManager mAudioManager;
         private final Handler mHandler;
@@ -1295,14 +1254,15 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
             mContext = context;
         }
 
-        private int ringerModeToIndex(int ringerMode) {
-            // They just happen to coincide
-            return ringerMode;
-        }
-
         private int indexToRingerMode(int index) {
-            // They just happen to coincide
-            return index;
+            if (index == 2) {
+                if (mHasVibrator) {
+                    return AudioManager.RINGER_MODE_VIBRATE;
+                } else {
+                    return AudioManager.RINGER_MODE_NORMAL;
+                }
+            }
+            return AudioManager.RINGER_MODE_NORMAL;
         }
 
         @Override
@@ -1314,9 +1274,28 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                 LayoutInflater inflater) {
             View v = inflater.inflate(R.layout.global_actions_silent_mode, parent, false);
 
-            int selectedIndex = ringerModeToIndex(mAudioManager.getRingerMode());
-            for (int i = 0; i < 3; i++) {
+            int ringerMode = mAudioManager.getRingerModeInternal();
+            int zenMode = Global.getInt(mContext.getContentResolver(), Global.ZEN_MODE,
+                    Global.ZEN_MODE_OFF);
+            int selectedIndex = 0;
+            if (zenMode != Global.ZEN_MODE_OFF) {
+                if (zenMode == Global.ZEN_MODE_NO_INTERRUPTIONS) {
+                    selectedIndex = 0;
+                } else if (zenMode == Global.ZEN_MODE_IMPORTANT_INTERRUPTIONS) {
+                    selectedIndex = 1;
+                }
+            } else if (ringerMode == AudioManager.RINGER_MODE_VIBRATE) {
+                selectedIndex = 2;
+            } else if (ringerMode == AudioManager.RINGER_MODE_NORMAL) {
+                selectedIndex = 3;
+            }
+
+            for (int i = 0; i < ITEM_IDS.length; i++) {
                 View itemView = v.findViewById(ITEM_IDS[i]);
+                if (!mHasVibrator && i == 2) {
+                    itemView.setVisibility(View.GONE);
+                    continue;
+                }
                 itemView.setSelected(selectedIndex == i);
                 // Set up click handler
                 itemView.setTag(i);
@@ -1347,7 +1326,28 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
             if (!(v.getTag() instanceof Integer)) return;
 
             int index = (Integer) v.getTag();
-            mAudioManager.setRingerMode(indexToRingerMode(index));
+            if (index == 0 || index == 1) {
+                int zenMode = index == 0
+                        ? Global.ZEN_MODE_NO_INTERRUPTIONS
+                        : Global.ZEN_MODE_IMPORTANT_INTERRUPTIONS;
+                // ZenModeHelper will revert zen mode back to the previous value if we just
+                // put the value into the Settings db, so use INotificationManager instead
+                INotificationManager noMan = INotificationManager.Stub.asInterface(
+                        ServiceManager.getService(Context.NOTIFICATION_SERVICE));
+                try {
+                    noMan.setZenMode(zenMode, null, TAG);
+                } catch (RemoteException e) {
+                    Log.e(TAG, "Unable to set zen mode", e);
+                }
+            } else {
+                Global.putInt(mContext.getContentResolver(), Global.ZEN_MODE, Global.ZEN_MODE_OFF);
+            }
+
+            if (index == 2 || index == 3) {
+                int ringerMode = indexToRingerMode(index);
+                mAudioManager.setRingerModeInternal(ringerMode);
+            }
+            mAdapter.notifyDataSetChanged();
             mHandler.sendEmptyMessageDelayed(MESSAGE_DISMISS, DIALOG_DISMISS_DELAY);
         }
     }
